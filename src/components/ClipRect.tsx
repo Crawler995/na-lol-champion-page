@@ -389,10 +389,10 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     points = points.map(point => {
       const halfWidth = width / 2;
       const halfHeight = height / 2;
-      const halfBorderWidth = borderWidth / 2;
+      const factor = borderWidth / 2 + 0.5;
 
-      const x = point.x + (point.x < halfWidth ? halfBorderWidth : -halfBorderWidth);
-      const y = point.y + (point.y < halfHeight ? halfBorderWidth : -halfBorderWidth);
+      const x = point.x + (point.x < halfWidth ? factor : -factor);
+      const y = point.y + (point.y < halfHeight ? factor : -factor);
 
       return { x, y };
     });

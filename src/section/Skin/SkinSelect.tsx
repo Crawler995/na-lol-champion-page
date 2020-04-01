@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import React, { ChangeEvent, useRef, useState, useEffect } from 'react';
+import React, { ChangeEvent, useRef, useState } from 'react';
 import { createClipRect } from '../../components/ClipRect';
 
 const transition = `all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)`;
