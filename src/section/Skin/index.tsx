@@ -1,11 +1,17 @@
 import styled from 'styled-components';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import SkinDetail from './SkinDetail';
 import SkinSelect from './SkinSelect';
+
+const breakpoint = 1000;
 
 const Section = styled.section`
   padding: 60px;
   position: relative;
+
+  @media screen and (max-width: ${breakpoint}px) {
+    background-color: rgb(0, 9, 19);
+  }
 `;
 
 const Brand = styled.div`
@@ -13,13 +19,19 @@ const Brand = styled.div`
   width: 200px;
   height: 60px;
   line-height: 60px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 0.625rem;
+  letter-spacing: 0.25em;
+  font-family: 'Spiegel';
+  font-weight: bold;
   left: 0;
   top: calc(50% + 100px);
   text-align: center;
   transform: rotate(-90deg);
   transform-origin: left top;
+
+  @media screen and (max-width: ${breakpoint}px) {
+    color: rgba(255, 255, 255, 0.6);
+  }
 `;
 
 const Wrapper = styled.div`
@@ -73,7 +85,7 @@ const skinImages = [
   {
     name: 'FIRECRACKER VAYNE PRESTIGE EDITION',
     src: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Vayne_13.jpg'
-  },
+  }
 ];
 
 export default function Skin() {

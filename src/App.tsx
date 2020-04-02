@@ -1,6 +1,7 @@
 import React from 'react';
 import { createGlobalStyle } from 'styled-components';
 import Skin from './section/Skin';
+import './font.css';
 
 const GlobalStyle = createGlobalStyle`
   * {
