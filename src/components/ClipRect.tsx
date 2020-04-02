@@ -1,5 +1,6 @@
 import React, { Component, createRef } from 'react';
 import TWEEN from '@tweenjs/tween.js';
+import { RecursivePartial, deepMergeProps } from '../utils';
 
 interface IClipSize {
   leftTop: number;
@@ -48,58 +49,45 @@ interface ClipRectState {
   height: number;
 }
 
-const defaultClipSize: IClipSize = {
-  leftTop: 0,
-  rightTop: 20,
-  rightBottom: 0,
-  leftBottom: 0
-};
+const defaultProps: ClipRectProps = {
+  draw: true,
 
-const defaultHoverAnimationConfig: IHoverAnimation = {
-  duration: 200,
-  delay: 0,
-  timingFunction: TWEEN.Easing.Cubic.InOut
-};
+  bgColor: 'rgba(0, 0, 0, 0)',
+  borderColor: 'rgba(255, 255, 255, 0.2)',
+  borderWidth: 1,
+  clipSize: {
+    leftTop: 0,
+    rightTop: 20,
+    rightBottom: 0,
+    leftBottom: 0
+  },
 
-const defaultLineGrowAnimationConfig: ILineGrowAnimation = {
-  duration: 800,
-  delay: 0,
-  timingFunction: TWEEN.Easing.Quartic.In,
+  hoverAnimation: true,
+  hoverAnimationConfig: {
+    duration: 200,
+    delay: 0,
+    timingFunction: TWEEN.Easing.Cubic.InOut
+  },
 
-  startDrawPointsNum: 1,
-  lineGrowHead: true,
-  lineGrowHeadConfig: {
-    width: 5,
-    length: 0.1
+  lineGrowAnimation: true,
+  lineGrowAnimationConfig: {
+    duration: 800,
+    delay: 0,
+    timingFunction: TWEEN.Easing.Quartic.In,
+
+    startDrawPointsNum: 1,
+    lineGrowHead: true,
+    lineGrowHeadConfig: {
+      width: 5,
+      length: 0.1
+    }
   }
 };
 
-export const createClipRect = ({
-  draw = false,
-
-  bgColor = 'rgba(0, 0, 0, 0)',
-  borderColor = 'rgba(255, 255, 255, 0.2)',
-  borderWidth = 1,
-  clipSize = defaultClipSize,
-
-  hoverAnimation = true,
-  hoverAnimationConfig = defaultHoverAnimationConfig,
-
-  lineGrowAnimation = true,
-  lineGrowAnimationConfig = defaultLineGrowAnimationConfig
-}: Partial<ClipRectProps>) => (
-  <ClipRect
-    draw={draw}
-    bgColor={bgColor}
-    borderColor={borderColor}
-    borderWidth={borderWidth}
-    clipSize={clipSize}
-    hoverAnimation={hoverAnimation}
-    hoverAnimationConfig={hoverAnimationConfig}
-    lineGrowAnimation={lineGrowAnimation}
-    lineGrowAnimationConfig={lineGrowAnimationConfig}
-  />
-);
+export const createClipRect = (props: RecursivePartial<ClipRectProps>) => {
+  const mergedProps = deepMergeProps(defaultProps, props);
+  return <ClipRect {...mergedProps} />;
+};
 
 interface IPos {
   x: number;
@@ -150,12 +138,15 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   }
 
   componentDidUpdate() {
+    this.initSize();
     this.initCtx();
   }
 
   initSize = () => {
     const { width, height } = this.canvasRef.current!.getBoundingClientRect();
-    this.setState({ width, height });
+    if (width !== this.state.width && height !== this.state.height) {
+      this.setState({ width, height });
+    }
   };
 
   initCtx = () => {
@@ -213,7 +204,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
 
   drawWithLineGrowAnimation = () => {
     const { width, height } = this.state;
-    const { lineGrowAnimationConfig, borderWidth } = this.props;
+    const { lineGrowAnimationConfig } = this.props;
     if (this.lineGrowTweenCompleted) {
       this.ctx!.clearRect(0, 0, width, height);
       this.drawWithoutLineGrowAnimation();
@@ -223,20 +214,29 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     const num = lineGrowAnimationConfig.startDrawPointsNum!;
     for (let i = 0; i < num; i++) {
       this.drawLineByStartPointAndLength(i / num, this.lineGrowPartLength);
-      this.ctx!.lineWidth = lineGrowAnimationConfig.lineGrowHeadConfig.width;
-      const lineGrowHeadOriginalLength = lineGrowAnimationConfig.lineGrowHeadConfig!.length!;
-      const lineGrowHeadStart = i / num + this.lineGrowPartLength;
-      const lineGrowHeadLength = lineGrowHeadOriginalLength;
-      this.ctx!.globalAlpha =
-        this.lineGrowPartLength + lineGrowHeadLength > 1 / num
-          ? (lineGrowHeadLength - (this.lineGrowPartLength + lineGrowHeadLength - 1 / num)) /
-            lineGrowHeadLength
-          : 1;
-      this.drawLineByStartPointAndLength(lineGrowHeadStart, lineGrowHeadLength);
-      this.ctx!.lineWidth = borderWidth;
-      this.ctx!.globalAlpha = 1;
+      if (!lineGrowAnimationConfig.lineGrowHead) continue;
+
+      this.drawLineGrowHead(i);
     }
     // drawLineByStartPointAndLength(0.9, 0.12);
+  };
+
+  drawLineGrowHead = (index: number) => {
+    const { lineGrowAnimationConfig, borderWidth } = this.props;
+    const num = lineGrowAnimationConfig.startDrawPointsNum!;
+
+    this.ctx!.lineWidth = lineGrowAnimationConfig.lineGrowHeadConfig.width;
+    const lineGrowHeadOriginalLength = lineGrowAnimationConfig.lineGrowHeadConfig!.length!;
+    const lineGrowHeadStart = index / num + this.lineGrowPartLength;
+    const lineGrowHeadLength = lineGrowHeadOriginalLength;
+    this.ctx!.globalAlpha =
+      this.lineGrowPartLength + lineGrowHeadLength > 1 / num
+        ? (lineGrowHeadLength - (this.lineGrowPartLength + lineGrowHeadLength - 1 / num)) /
+          lineGrowHeadLength
+        : 1;
+    this.drawLineByStartPointAndLength(lineGrowHeadStart, lineGrowHeadLength);
+    this.ctx!.lineWidth = borderWidth;
+    this.ctx!.globalAlpha = 1;
   };
 
   drawLineByStartPointAndLength = (start: number, length: number, alpha = 1) => {
