@@ -2,25 +2,29 @@ import styled from 'styled-components';
 import React, { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { createClipRect } from '../../components/ClipRect';
 import TWEEN from '@tweenjs/tween.js';
+import {lgBreakpoint} from '../breakpoint';
 
 const transition = `all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)`;
-const breakpoint = 1000;
 
 const Wrapper = styled.div`
   position: absolute;
-  display: flex;
-  flex-direction: column;
   z-index: 2;
   top: 0px;
+
+  display: flex;
+  flex-direction: column;
+  
   width: 25vw;
   min-width: 400px;
   height: 100%;
+
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     position: relative;
     width: 100%;
+
     background-color: rgba(0, 0, 0, 0);
     backdrop-filter: none;
   }
@@ -28,17 +32,19 @@ const Wrapper = styled.div`
 
 const Title = styled.h2`
   display: block;
+  margin: 40px 40px 0px 40px;
+  padding: 20px;
+
+  border-bottom: 1px solid rgba(193, 193, 193, 0.2);
+
   font-size: 40px;
   font-style: italic;
   font-family: 'Beaufort for LOL';
   font-weight: bold;
   letter-spacing: 0.05em;
   color: #fff;
-  margin: 40px 40px 0px 40px;
-  padding: 20px;
-  border-bottom: 1px solid rgba(193, 193, 193, 0.2);
-
-  @media screen and (max-width: ${breakpoint}px) {
+  
+  @media screen and (max-width: ${lgBreakpoint}px) {
     display: none;
   }
 `;
@@ -46,17 +52,16 @@ const Title = styled.h2`
 const ItemWrapper = styled.div`
   flex-grow: 1;
   width: calc(100% + 15px);
-  overflow-y: hidden;
+  overflow: hidden;
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     width: 100%;
-    overflow-x: hidden;
   }
 `;
 
 const ItemList = styled.ul`
   padding-left: 60px;
-  transform: translate3d(0, ${(props: { curIndex: number }) => 30 - props.curIndex * 100}px, 0);
+  transform: translateY(${(props: { curIndex: number }) => 30 - props.curIndex * 100}px);
 
   transition: ${transition};
 
@@ -66,18 +71,20 @@ const ItemList = styled.ul`
     clear: left;
   }
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     display: flex;
-    transform: translate3d(${(props: { curIndex: number }) => -props.curIndex * 100}px, 0, 0);
+    padding-left: 0px;
+    transform: translateX(calc(${(props: { curIndex: number }) => -props.curIndex * 112}px + 30vw));
   }
 `;
 
 const Item = styled.li`
-  list-style: none;
+  position: relative;
+  display: flex;
   height: 100px;
   margin: 10px 0px;
-  display: flex;
-  position: relative;
+
+  list-style: none;
 
   &:hover {
     & > img {
@@ -89,7 +96,7 @@ const Item = styled.li`
     }
   }
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     display: block;
     height: auto;
     margin: 10px 20px 80px 20px;
@@ -102,10 +109,11 @@ const PreviewImage = styled.img`
   height: 60px;
   margin: 20px;
   object-fit: cover;
+
   opacity: 0.7;
   transition: ${transition};
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     margin: 6px;
   }
 `;
@@ -127,7 +135,7 @@ const HiddenInput = styled.input.attrs({
     opacity: 1;
   }
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     &:checked ~ img {
       transform: none;
       opacity: 1;
@@ -142,13 +150,14 @@ const HiddenInput = styled.input.attrs({
 
 const SkinName = styled.label`
   flex: 0.9;
+  
   font-size: 14px;
   font-family: 'Spiegel';
   font-weight: 600;
   letter-spacing: 0.05em;
   color: #fff;
-  cursor: pointer;
   opacity: 0.7;
+  cursor: pointer;
 
   transition: ${transition};
 
@@ -159,17 +168,17 @@ const SkinName = styled.label`
     transform: translateY(-50%);
   }
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     position: absolute;
     display: block;
+    flex: none;
+    z-index: 3;
     top: 0px;
     padding-top: 80px;
-    z-index: 3;
+    width: 100%;
 
     font-size: 10px;
-    flex: none;
     text-align: center;
-    width: 100%;
 
     & > span {
       top: 0;
@@ -187,7 +196,7 @@ const ClipRectWrapper = styled.div`
   height: 100px;
   padding: 8px 0px 8px 20px;
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     height: 100%;
     padding: 0px;
     z-index: 1;
@@ -204,12 +213,13 @@ interface IProps {
 
 export default function SkinSelect(props: IProps) {
   const [curIndex, setCurIndex] = useState(0);
-  const [isPC, setIsPC] = useState(window.innerWidth > breakpoint);
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth > lgBreakpoint);
   const itemListRef = useRef<HTMLUListElement>(null);
+  const slideInterval = 5000;
 
   window.onresize = () => {
     const width = window.innerWidth;
-    setIsPC(width > breakpoint);
+    setIsLargeScreen(width > lgBreakpoint);
   };
 
   useEffect(() => {
@@ -219,7 +229,7 @@ export default function SkinSelect(props: IProps) {
       ) as HTMLLIElement;
       const input = li.firstElementChild as HTMLInputElement;
       input.click();
-    }, 5000);
+    }, slideInterval);
 
     return () => {
       clearInterval(flag);
@@ -252,7 +262,7 @@ export default function SkinSelect(props: IProps) {
               <ClipRectWrapper>
                 {index === curIndex ? (
                   createClipRect(
-                    isPC
+                    isLargeScreen
                       ? {
                           borderWidth: 1.6,
                           hoverAnimation: false

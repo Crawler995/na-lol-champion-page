@@ -106,7 +106,6 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   private dpr = window.devicePixelRatio;
   private lineGrowPartLength: number = 0;
 
-  private pointsInfo: IPointsInfo | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private mouseEnterTween: TWEEN.Tween | null = null;
   private mouseLeaveTween: TWEEN.Tween | null = null;
@@ -117,7 +116,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     super(props);
 
     this.canvasRef = createRef<HTMLCanvasElement>();
-    this.dynamicClipSize = this.props.clipSize!;
+    this.dynamicClipSize = this.props.clipSize;
 
     this.state = {
       width: 0,
@@ -127,8 +126,6 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
 
   componentDidMount() {
     this.initSize();
-
-    this.pointsInfo = this.initPointsInfo();
     this.initCtx();
     this.initLineGrowTween();
 
@@ -170,11 +167,11 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
 
     this.lineGrowTween = new TWEEN.Tween({ obj: 0 })
       .to(
-        { obj: 1 / lineGrowAnimationConfig.startDrawPointsNum! },
-        lineGrowAnimationConfig.duration!
+        { obj: 1 / lineGrowAnimationConfig.startDrawPointsNum },
+        lineGrowAnimationConfig.duration
       )
       .delay(lineGrowAnimationConfig.delay)
-      .easing(lineGrowAnimationConfig.timingFunction!)
+      .easing(lineGrowAnimationConfig.timingFunction)
       .onUpdate((cur: { obj: number }) => (this.lineGrowPartLength = cur.obj))
       .onComplete(() => (this.lineGrowTweenCompleted = true))
       .start();
@@ -218,7 +215,6 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
 
       this.drawLineGrowHead(i);
     }
-    // drawLineByStartPointAndLength(0.9, 0.12);
   };
 
   drawLineGrowHead = (index: number) => {
@@ -324,8 +320,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
         ? restLength
         : restLength + this.getDistance(startPoint, points[startBehindPointIndex])
     );
-    // console.log(restLength)
-    // console.log(startPoint, middlePoints, endPoint);
+
     this.drawLineThroughPoints([startPoint, ...middlePoints, endPoint], false, alpha);
   };
 
@@ -333,12 +328,12 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     const { width, height } = this.state;
     const { clipSize } = this.props;
     const point: IPos = { x: 0, y: 0 };
-    const factor = Math.sin(Math.PI / 4);
+    const restLengthWithFactor = Math.sin(Math.PI / 4) * restLength;
 
     switch (beforePointIndex) {
       case 0:
-        point.x = restLength * factor;
-        point.y = clipSize.leftTop - restLength * factor;
+        point.x = restLengthWithFactor;
+        point.y = clipSize.leftTop - restLengthWithFactor;
         break;
 
       case 1:
@@ -347,8 +342,8 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
         break;
 
       case 2:
-        point.x = width - clipSize.rightTop + restLength * factor;
-        point.y = restLength * factor;
+        point.x = width - clipSize.rightTop + restLengthWithFactor;
+        point.y = restLengthWithFactor;
         break;
 
       case 3:
@@ -357,8 +352,8 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
         break;
 
       case 4:
-        point.x = width - restLength * factor;
-        point.y = height - clipSize.rightBottom + restLength * factor;
+        point.x = width - restLengthWithFactor;
+        point.y = height - clipSize.rightBottom + restLengthWithFactor;
         break;
 
       case 5:
@@ -367,8 +362,8 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
         break;
 
       case 6:
-        point.x = clipSize.leftBottom - restLength * factor;
-        point.y = height - restLength * factor;
+        point.x = clipSize.leftBottom - restLengthWithFactor;
+        point.y = height - restLengthWithFactor;
         break;
 
       case 7:
@@ -478,6 +473,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     if (!this.canvasRef.current) return;
     if (this.mouseEnterTween?.isPlaying) this.mouseEnterTween.pause();
     const { clipSize, hoverAnimationConfig } = this.props;
+    
     this.canvasRef.current.addEventListener('mouseleave', () => {
       this.mouseLeaveTween = new TWEEN.Tween({ ...this.dynamicClipSize })
         .to(clipSize, hoverAnimationConfig.duration as number)

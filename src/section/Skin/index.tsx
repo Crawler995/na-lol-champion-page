@@ -2,43 +2,70 @@ import styled from 'styled-components';
 import React, { useState } from 'react';
 import SkinDetail from './SkinDetail';
 import SkinSelect from './SkinSelect';
-
-const breakpoint = 1000;
+import {lgBreakpoint, smBreakpoint} from '../breakpoint';
 
 const Section = styled.section`
-  padding: 60px;
   position: relative;
+  padding: 60px;
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     background-color: rgb(0, 9, 19);
+  }
+
+  @media screen and (max-width: ${smBreakpoint}px) {
+    padding: 60px 0px;
+  }
+`;
+
+const Title = styled.h2`
+  display: none;
+  padding-bottom: 20px;
+
+  font-size: 20px;
+  font-style: italic;
+  font-family: 'Beaufort for LOL';
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: #fff;
+  
+  @media screen and (max-width: ${smBreakpoint}px) {
+    display: block;
   }
 `;
 
 const Brand = styled.div`
   position: absolute;
+  left: 0;
+  top: calc(50% + 100px);
   width: 200px;
   height: 60px;
   line-height: 60px;
+
   font-size: 0.625rem;
-  letter-spacing: 0.25em;
   font-family: 'Spiegel';
   font-weight: bold;
-  left: 0;
-  top: calc(50% + 100px);
+  letter-spacing: 0.25em;
   text-align: center;
+
   transform: rotate(-90deg);
   transform-origin: left top;
 
-  @media screen and (max-width: ${breakpoint}px) {
+  @media screen and (max-width: ${lgBreakpoint}px) {
     color: rgba(255, 255, 255, 0.6);
+  }
+
+  @media screen and (max-width: ${smBreakpoint}px) {
+    display: none;
   }
 `;
 
 const Wrapper = styled.div`
+  position: relative;
   width: 100%;
   max-width: 97.5rem;
-  position: relative;
   margin: 0 auto;
+  overflow: hidden;
 `;
 
 const skinImages = [
@@ -97,6 +124,7 @@ export default function Skin() {
 
   return (
     <Section>
+      <Title>AVAILABLE SKINS</Title>
       <Brand>AVAILABLE SKINS -</Brand>
       <Wrapper>
         <SkinDetail skinSrcs={skinImages.map(image => image.src)} curIndex={curIndex} />
