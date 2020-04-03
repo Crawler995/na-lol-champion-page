@@ -28,3 +28,53 @@ export function deepMergeProps<T> (defaultProps: T, props: RecursivePartial<T>) 
     return prev;
   }, {}) as T;
 }
+
+export function enterViewportLengthFromBottom<T> (element: T extends HTMLElement ? T : any) {
+  const rect = element.getBoundingClientRect();
+  return window.innerHeight - rect.top;
+}
+
+export function throttle(fn: (...args: any[]) => void, wait: number) {
+  let timer: any = null;
+
+  return function foo(this: any) {
+    if(timer !== null) return;
+    const args = Array.prototype.slice.call(arguments);
+
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+
+      clearTimeout(timer);
+      timer = null;
+    }, wait);
+  }
+}
+
+export function debounce(fn: (...args: any[]) => void, wait: number) {
+  let timer: any = null;
+
+  return function foo(this: any) {
+    const args = Array.prototype.slice.call(arguments);
+
+    if(timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+
+      clearTimeout(timer);
+      timer = null;
+    }, wait);
+  }
+}
+
+export const limitNumBetweenRange = (num: number, start: number, end: number) => {
+  if(num < start) return start;
+  if(num > end) return end;
+  return num;
+};
+
+export const cubicEaseOut = (start: number, end: number, t: number) => {
+  return (end - start) * t * (2 - t) + start;
+}

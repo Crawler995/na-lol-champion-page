@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import React, { useState } from 'react';
 import SkinDetail from './SkinDetail';
 import SkinSelect from './SkinSelect';
-import {lgBreakpoint, smBreakpoint} from '../breakpoint';
+import { lgBreakpoint, smBreakpoint } from '../breakpoint';
 
 const Section = styled.section`
   position: relative;
@@ -23,12 +23,12 @@ const Title = styled.h2`
 
   font-size: 20px;
   font-style: italic;
-  font-family: 'Beaufort for LOL';
+  font-family: 'Beaufort for LOL', 'Arial Narrow', Arial, sans-serif;
   font-weight: bold;
   letter-spacing: 0.05em;
   text-align: center;
   color: #fff;
-  
+
   @media screen and (max-width: ${smBreakpoint}px) {
     display: block;
   }
@@ -43,7 +43,7 @@ const Brand = styled.div`
   line-height: 60px;
 
   font-size: 0.625rem;
-  font-family: 'Spiegel';
+  font-family: 'Spiegel', 'Arial Narrow', Arial, sans-serif;
   font-weight: bold;
   letter-spacing: 0.25em;
   text-align: center;

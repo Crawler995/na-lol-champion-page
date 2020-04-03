@@ -132,6 +132,11 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     if (this.props.draw) {
       this.draw();
     }
+
+    if (this.props.hoverAnimation) {
+      this.reduceClipSizeWhenMouseHover();
+      this.recoverClipSizeWhenMouseLeave();
+    }
   }
 
   componentDidUpdate() {
@@ -166,10 +171,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     const { lineGrowAnimationConfig } = this.props;
 
     this.lineGrowTween = new TWEEN.Tween({ obj: 0 })
-      .to(
-        { obj: 1 / lineGrowAnimationConfig.startDrawPointsNum },
-        lineGrowAnimationConfig.duration
-      )
+      .to({ obj: 1 / lineGrowAnimationConfig.startDrawPointsNum }, lineGrowAnimationConfig.duration)
       .delay(lineGrowAnimationConfig.delay)
       .easing(lineGrowAnimationConfig.timingFunction)
       .onUpdate((cur: { obj: number }) => (this.lineGrowPartLength = cur.obj))
@@ -473,7 +475,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     if (!this.canvasRef.current) return;
     if (this.mouseEnterTween?.isPlaying) this.mouseEnterTween.pause();
     const { clipSize, hoverAnimationConfig } = this.props;
-    
+
     this.canvasRef.current.addEventListener('mouseleave', () => {
       this.mouseLeaveTween = new TWEEN.Tween({ ...this.dynamicClipSize })
         .to(clipSize, hoverAnimationConfig.duration as number)

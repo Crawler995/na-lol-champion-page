@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import React, { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { createClipRect } from '../../components/ClipRect';
 import TWEEN from '@tweenjs/tween.js';
-import {lgBreakpoint} from '../breakpoint';
+import { lgBreakpoint } from '../breakpoint';
 
 const transition = `all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)`;
 
@@ -13,7 +13,7 @@ const Wrapper = styled.div`
 
   display: flex;
   flex-direction: column;
-  
+
   width: 25vw;
   min-width: 400px;
   height: 100%;
@@ -39,11 +39,11 @@ const Title = styled.h2`
 
   font-size: 40px;
   font-style: italic;
-  font-family: 'Beaufort for LOL';
+  font-family: 'Beaufort for LOL', 'Arial Narrow', Arial, sans-serif;
   font-weight: bold;
   letter-spacing: 0.05em;
   color: #fff;
-  
+
   @media screen and (max-width: ${lgBreakpoint}px) {
     display: none;
   }
@@ -150,9 +150,9 @@ const HiddenInput = styled.input.attrs({
 
 const SkinName = styled.label`
   flex: 0.9;
-  
+
   font-size: 14px;
-  font-family: 'Spiegel';
+  font-family: 'Spiegel', 'Arial Narrow', Arial, sans-serif;
   font-weight: 600;
   letter-spacing: 0.05em;
   color: #fff;
@@ -178,6 +178,7 @@ const SkinName = styled.label`
     width: 100%;
 
     font-size: 10px;
+    letter-spacing: 0.15em;
     text-align: center;
 
     & > span {
@@ -217,10 +218,15 @@ export default function SkinSelect(props: IProps) {
   const itemListRef = useRef<HTMLUListElement>(null);
   const slideInterval = 5000;
 
-  window.onresize = () => {
-    const width = window.innerWidth;
-    setIsLargeScreen(width > lgBreakpoint);
-  };
+  useEffect(() => {
+    const resizeHandler = () => {
+      const width = window.innerWidth;
+      setIsLargeScreen(width > lgBreakpoint);
+    };
+    window.addEventListener('resize', resizeHandler);
+
+    return () => window.removeEventListener('resize', resizeHandler);
+  });
 
   useEffect(() => {
     const flag = setInterval(() => {

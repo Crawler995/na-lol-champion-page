@@ -1,6 +1,6 @@
 import React from 'react';
 import { createGlobalStyle } from 'styled-components';
-import Skin from './section/Skin';
+import { Skin, PlayForFree } from './section';
 import './font.css';
 
 const GlobalStyle = createGlobalStyle`
@@ -22,6 +22,7 @@ function App() {
       <GlobalStyle />
 
       <Skin />
+      <PlayForFree />
     </div>
   );
 }

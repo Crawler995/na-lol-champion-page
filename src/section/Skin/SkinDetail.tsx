@@ -48,11 +48,7 @@ export default function SkinDetail(props: IProps) {
   return (
     <Wrapper>
       {props.skinSrcs.map((src, index) => (
-        <Item
-          key={index}
-          show={index === props.curIndex}
-          index={index}
-        >
+        <Item key={index} show={index === props.curIndex} index={index}>
           <SkinImage src={src} />
         </Item>
       ))}

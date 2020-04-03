@@ -4,6 +4,12 @@
 }
 
 @font-face {
+  font-family: 'Spiegel';
+  src: url('./assets/fonts/Spiegel-Bold.woff') format('woff');
+  font-weight: bold;
+}
+
+@font-face {
   font-family: 'Beaufort for LOL';
   src: url('./assets/fonts/BeaufortforLOL-Regular.woff') format('woff');
   font-weight: normal;
