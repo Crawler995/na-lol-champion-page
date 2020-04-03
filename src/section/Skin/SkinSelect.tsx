@@ -226,7 +226,7 @@ export default function SkinSelect(props: IProps) {
     window.addEventListener('resize', resizeHandler);
 
     return () => window.removeEventListener('resize', resizeHandler);
-  });
+  }, []);
 
   useEffect(() => {
     const flag = setInterval(() => {
@@ -240,7 +240,7 @@ export default function SkinSelect(props: IProps) {
     return () => {
       clearInterval(flag);
     };
-  });
+  }, [curIndex, props.skinImages.length]);
 
   const curIndexChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const curIndex = props.skinImages.map(image => image.name).indexOf(e.target.value);
