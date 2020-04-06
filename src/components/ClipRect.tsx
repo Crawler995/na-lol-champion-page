@@ -111,6 +111,9 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   private mouseLeaveTween: TWEEN.Tween | null = null;
   private lineGrowTween: TWEEN.Tween | null = null;
   private lineGrowTweenCompleted = false;
+  private requestAnimationFrameFlag: number = 0;
+  private shouldStopAnimation = false;
+  private isFirstDrawWithoutAnimation = true;
 
   constructor(props: ClipRectProps) {
     super(props);
@@ -130,7 +133,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     this.initLineGrowTween();
 
     if (this.props.draw) {
-      this.draw();
+      this.requestAnimationFrameFlag = window.requestAnimationFrame(this.draw);
     }
 
     if (this.props.hoverAnimation) {
@@ -142,6 +145,14 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   componentDidUpdate() {
     this.initSize();
     this.initCtx();
+
+    this.draw();
+  }
+
+  componentWillUnmount() {
+    window.cancelAnimationFrame(this.requestAnimationFrameFlag);
+    window.removeEventListener('mouseenter', this.mouseEnterHandler);
+    window.removeEventListener('mouseleave', this.mouseLeaveHandler);
   }
 
   initSize = () => {
@@ -175,17 +186,26 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
       .delay(lineGrowAnimationConfig.delay)
       .easing(lineGrowAnimationConfig.timingFunction)
       .onUpdate((cur: { obj: number }) => (this.lineGrowPartLength = cur.obj))
-      .onComplete(() => (this.lineGrowTweenCompleted = true))
+      .onComplete(() => {
+        this.lineGrowTweenCompleted = true;
+      })
       .start();
   };
 
+  /**
+   * lineGrowAnimation = true
+   * after line grow, draw without line grow once
+   *
+   * hoverGrowAnimation = true
+   *
+   */
   draw = () => {
     if (!this.ctx) return;
     const { lineGrowAnimation } = this.props;
     const { width, height } = this.state;
     this.ctx.clearRect(0, 0, width, height);
 
-    if (lineGrowAnimation) {
+    if (lineGrowAnimation && !this.lineGrowTweenCompleted) {
       this.drawWithLineGrowAnimation();
     } else {
       this.drawWithoutLineGrowAnimation();
@@ -193,46 +213,51 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
 
     TWEEN.update();
 
-    window.requestAnimationFrame(this.draw);
+    if (!this.shouldStopAnimation) {
+      this.requestAnimationFrameFlag = window.requestAnimationFrame(this.draw);
+    }
   };
 
   drawWithoutLineGrowAnimation = () => {
     const points = this.getClipRectPoints();
     this.drawLineThroughPoints(points);
+
+    if (this.lineGrowTweenCompleted && this.isFirstDrawWithoutAnimation) {
+      this.isFirstDrawWithoutAnimation = false;
+      this.shouldStopAnimation = true;
+    }
   };
 
   drawWithLineGrowAnimation = () => {
-    const { width, height } = this.state;
     const { lineGrowAnimationConfig } = this.props;
-    if (this.lineGrowTweenCompleted) {
-      this.ctx!.clearRect(0, 0, width, height);
-      this.drawWithoutLineGrowAnimation();
-      return;
-    }
 
     const num = lineGrowAnimationConfig.startDrawPointsNum!;
     for (let i = 0; i < num; i++) {
       this.drawLineByStartPointAndLength(i / num, this.lineGrowPartLength);
-      if (!lineGrowAnimationConfig.lineGrowHead) continue;
-
-      this.drawLineGrowHead(i);
     }
+
+    if (!lineGrowAnimationConfig.lineGrowHead) return;
+
+    this.drawLineGrowHead();
   };
 
-  drawLineGrowHead = (index: number) => {
+  drawLineGrowHead = () => {
     const { lineGrowAnimationConfig, borderWidth } = this.props;
+    this.ctx!.lineWidth = lineGrowAnimationConfig.lineGrowHeadConfig.width;
     const num = lineGrowAnimationConfig.startDrawPointsNum!;
 
-    this.ctx!.lineWidth = lineGrowAnimationConfig.lineGrowHeadConfig.width;
     const lineGrowHeadOriginalLength = lineGrowAnimationConfig.lineGrowHeadConfig!.length!;
-    const lineGrowHeadStart = index / num + this.lineGrowPartLength;
-    const lineGrowHeadLength = lineGrowHeadOriginalLength;
-    this.ctx!.globalAlpha =
-      this.lineGrowPartLength + lineGrowHeadLength > 1 / num
-        ? (lineGrowHeadLength - (this.lineGrowPartLength + lineGrowHeadLength - 1 / num)) /
-          lineGrowHeadLength
-        : 1;
-    this.drawLineByStartPointAndLength(lineGrowHeadStart, lineGrowHeadLength);
+
+    for (let i = 0; i < num; i++) {
+      const lineGrowHeadStart = i / num + this.lineGrowPartLength;
+      const lineGrowHeadLength = lineGrowHeadOriginalLength;
+      this.ctx!.globalAlpha =
+        this.lineGrowPartLength + lineGrowHeadLength > 1 / num
+          ? (lineGrowHeadLength - (this.lineGrowPartLength + lineGrowHeadLength - 1 / num)) /
+            lineGrowHeadLength
+          : 1;
+      this.drawLineByStartPointAndLength(lineGrowHeadStart, lineGrowHeadLength);
+    }
     this.ctx!.lineWidth = borderWidth;
     this.ctx!.globalAlpha = 1;
   };
@@ -452,7 +477,15 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
 
   reduceClipSizeWhenMouseHover = () => {
     if (!this.canvasRef.current) return;
+
+    this.canvasRef.current.addEventListener('mouseenter', this.mouseEnterHandler);
+  };
+
+  mouseEnterHandler = () => {
     if (this.mouseLeaveTween?.isPlaying) this.mouseLeaveTween.pause();
+
+    window.requestAnimationFrame(this.draw);
+    this.shouldStopAnimation = false;
 
     const to: IClipSize = {
       leftTop: 0,
@@ -462,27 +495,30 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     };
     const { hoverAnimationConfig } = this.props;
 
-    this.canvasRef.current.addEventListener('mouseenter', () => {
-      this.mouseEnterTween = new TWEEN.Tween({ ...this.dynamicClipSize })
-        .to(to, hoverAnimationConfig.duration!)
-        .easing(hoverAnimationConfig.timingFunction!)
-        .onUpdate(curClipSize => (this.dynamicClipSize = curClipSize))
-        .start();
-    });
+    this.mouseEnterTween = new TWEEN.Tween({ ...this.dynamicClipSize })
+      .to(to, hoverAnimationConfig.duration)
+      .easing(hoverAnimationConfig.timingFunction)
+      .onUpdate(curClipSize => (this.dynamicClipSize = curClipSize))
+      .start();
   };
 
   recoverClipSizeWhenMouseLeave = () => {
     if (!this.canvasRef.current) return;
+
+    this.canvasRef.current.addEventListener('mouseleave', this.mouseLeaveHandler);
+  };
+
+  mouseLeaveHandler = () => {
     if (this.mouseEnterTween?.isPlaying) this.mouseEnterTween.pause();
+
     const { clipSize, hoverAnimationConfig } = this.props;
 
-    this.canvasRef.current.addEventListener('mouseleave', () => {
-      this.mouseLeaveTween = new TWEEN.Tween({ ...this.dynamicClipSize })
-        .to(clipSize, hoverAnimationConfig.duration as number)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .onUpdate(curClipSize => (this.dynamicClipSize = curClipSize))
-        .start();
-    });
+    this.mouseLeaveTween = new TWEEN.Tween({ ...this.dynamicClipSize })
+      .to(clipSize, hoverAnimationConfig.duration)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .onUpdate(curClipSize => (this.dynamicClipSize = curClipSize))
+      .onComplete(() => (this.shouldStopAnimation = true))
+      .start();
   };
 
   render() {

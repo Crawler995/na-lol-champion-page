@@ -15,7 +15,6 @@ const Wrapper = styled.section`
 
 const Video = styled.video.attrs({
   loop: true,
-  autoPlay: true,
   playsInline: true
 })`
   position: relative;
@@ -91,13 +90,18 @@ class ClipRect extends React.PureComponent {
 
 export default function PlayForFree() {
   const [enterViewportPercent, setEnterViewportPercent] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const scrollHandler = () => {
       const curValue =
         1 -
-        limitNumBetweenRange(ref.current!.getBoundingClientRect().top / window.innerHeight, 0, 1);
+        limitNumBetweenRange(
+          wrapperRef.current!.getBoundingClientRect().top / window.innerHeight,
+          0,
+          1
+        );
       setEnterViewportPercent(curValue);
     };
 
@@ -105,6 +109,17 @@ export default function PlayForFree() {
 
     return () => window.removeEventListener('scroll', scrollHandler);
   }, []);
+
+  useEffect(() => {
+    if (enterViewportPercent > 0 && videoRef.current?.paused) {
+      videoRef.current?.play();
+      console.log('play');
+    }
+    if (enterViewportPercent <= 0 && !videoRef.current?.paused) {
+      videoRef.current?.pause();
+      console.log('pause');
+    }
+  }, [enterViewportPercent]);
 
   const buttonClickHandler = () => {
     console.log('PLAY FOR FREE');
@@ -116,7 +131,7 @@ export default function PlayForFree() {
   const videoOpacity = cubicEaseOut(0.2, 1, enterViewportPercent);
 
   return (
-    <Wrapper ref={ref}>
+    <Wrapper ref={wrapperRef}>
       <ButtonWrapper
         style={{
           transform: `translate3d(-50%, ${buttonWrapperOffset}px, 0)`
@@ -127,6 +142,7 @@ export default function PlayForFree() {
         <ClipRect />
       </ButtonWrapper>
       <Video
+        ref={videoRef}
         style={{
           opacity: videoOpacity,
           transform: `translate3d(0, ${videoOffset}px, 0)`
