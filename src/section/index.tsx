@@ -1,4 +1,5 @@
+import Ability from './Ability';
 import Skin from './Skin';
 import PlayForFree from './PlayForFree';
 
-export { Skin, PlayForFree };
+export { Ability, Skin, PlayForFree };
