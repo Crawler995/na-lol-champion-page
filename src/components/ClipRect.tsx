@@ -1,6 +1,6 @@
 import React, { Component, createRef } from 'react';
 import TWEEN from '@tweenjs/tween.js';
-import { RecursivePartial, deepMergeProps } from '../utils';
+import { RecursivePartial, deepMergeProps, debounce } from '../utils';
 
 interface IClipSize {
   leftTop: number;
@@ -140,6 +140,8 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
       this.reduceClipSizeWhenMouseHover();
       this.recoverClipSizeWhenMouseLeave();
     }
+
+    window.addEventListener('resize', this.sizeChangeHandler);
   }
 
   componentDidUpdate() {
@@ -153,6 +155,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     window.cancelAnimationFrame(this.requestAnimationFrameFlag);
     window.removeEventListener('mouseenter', this.mouseEnterHandler);
     window.removeEventListener('mouseleave', this.mouseLeaveHandler);
+    window.removeEventListener('resize', this.sizeChangeHandler);
   }
 
   initSize = () => {
@@ -163,10 +166,17 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     }
   };
 
-  initCtx = () => {
-    this.ctx = this.canvasRef.current!.getContext('2d');
-    if (!this.ctx) return;
+  sizeChangeHandler = debounce(() => {
+    console.log('resize')
+    this.initSize();
+    this.draw();
+  }, 500);
 
+  initCtx = () => {
+    const curCtx = this.canvasRef.current?.getContext('2d');
+    if (!curCtx) return;
+
+    this.ctx = curCtx;
     this.ctx.scale(this.dpr, this.dpr);
 
     const { bgColor, borderColor, borderWidth } = this.props;
