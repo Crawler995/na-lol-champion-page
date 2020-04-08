@@ -156,6 +156,7 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   }
 
   initSize = () => {
+    if (!this.canvasRef.current) return;
     const { width, height } = this.canvasRef.current!.getBoundingClientRect();
     if (width !== this.state.width && height !== this.state.height) {
       this.setState({ width, height });
@@ -192,13 +193,6 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
       .start();
   };
 
-  /**
-   * lineGrowAnimation = true
-   * after line grow, draw without line grow once
-   *
-   * hoverGrowAnimation = true
-   *
-   */
   draw = () => {
     if (!this.ctx) return;
     const { lineGrowAnimation } = this.props;

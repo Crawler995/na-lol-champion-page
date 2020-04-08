@@ -2,12 +2,44 @@ import styled from 'styled-components';
 import React, { ChangeEvent, useState } from 'react';
 import { createClipRect } from '../../components/ClipRect';
 import TWEEN from '@tweenjs/tween.js';
+import { lgBreakpoint, smBreakpoint } from '../breakpoint';
+
+const VariableWrapper = styled.div`
+  --img-width: 60px;
+  --img-margin: 17px;
+  --dis-between-img-cliprect: 6px;
+  --moved-sphere-radius: 10px;
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    --img-margin: 0px;
+  }
+
+  @media screen and (max-width: ${smBreakpoint}px) {
+    --img-width: 50px;
+    --img-margin: 0px;
+    --dis-between-img-cliprect: 3px;
+  }
+`;
 
 const Wrapper = styled.ul`
   position: relative;
   display: flex;
-
   padding: 0px;
+  padding-left: 5vw;
+
+  text-align: center;
+  border-bottom: 1px solid rgb(57, 64, 72);
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    padding: 60px 15%;
+    justify-content: space-between;
+
+    border-bottom: none;
+  }
+
+  @media screen and (max-width: ${smBreakpoint}px) {
+    padding: 30px;
+  }
 `;
 
 const Item = styled.li`
@@ -20,9 +52,9 @@ const Item = styled.li`
 const Icon = styled.img`
   display: block;
 
-  width: 60px;
-  height: 60px;
-  margin: 20px 20px 0px 20px;
+  width: var(--img-width);
+  height: var(--img-width);
+  margin: var(--img-margin) var(--img-margin) 0px var(--img-margin);
 
   transition: all 0.4s;
 `;
@@ -37,12 +69,21 @@ const HiddenInput = styled.input.attrs({
   &:checked {
     & ~ img,
     & ~ .cliprect-wrapper {
-      transform: translate3d(0, -20px, 0) !important;
+      transform: translate3d(0, -16px, 0) !important;
     }
 
     & ~ .vertical-line {
       opacity: 1;
       transform: scaleY(1);
+    }
+  }
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    &:checked {
+      & ~ img,
+      & ~ .cliprect-wrapper {
+        transform: translate3d(0, 0, 0) !important;
+      }
     }
   }
 `;
@@ -60,12 +101,18 @@ const HiddenLabel = styled.label`
 
   &:hover {
     & ~ img {
-      transform: translate3d(0, -8px, 0);
+      transform: translate3d(0, -6px, 0);
     }
 
-    & ~ .bottom-line {
-      &::before {
-        background-color: #d0a85c;
+    & ~ .bottom-sphere {
+      background-color: #d0a85c;
+    }
+  }
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    &:hover {
+      & ~ img {
+        transform: translate3d(0, 10px, 0);
       }
     }
   }
@@ -76,15 +123,17 @@ const ClipRectWrapper = styled.div.attrs({
 })`
   position: absolute;
   z-index: 2;
-  top: 14px;
-  left: 14px;
-  width: 72px;
-  height: 72px;
+  top: calc(var(--img-margin) - var(--dis-between-img-cliprect));
+  left: calc(var(--img-margin) - var(--dis-between-img-cliprect));
+  width: calc(var(--img-width) + var(--dis-between-img-cliprect) * 2);
+  height: calc(var(--img-width) + var(--dis-between-img-cliprect) * 2);
 `;
 
 const VerticalLine = styled.div.attrs({
   className: 'vertical-line'
 })`
+  position: relative;
+  top: 8px;
   height: 20px;
   width: 1px;
   margin-left: 50%;
@@ -95,50 +144,40 @@ const VerticalLine = styled.div.attrs({
   transform-origin: center bottom;
 
   transition: transform 0.6s 0.8s;
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    display: none;
+  }
 `;
 
-const BottomLine = styled.div.attrs({
-  className: 'bottom-line'
+const BottomSphere = styled.div.attrs({
+  className: 'bottom-sphere'
 })`
   position: relative;
-  top: 6px;
-  width: 100%;
+  display: inline-block;
+  top: 9px;
+  width: 9px;
   height: 9px;
+  border-radius: 9px;
+  background-color: rgb(57, 64, 72);
 
-  &::before {
-    content: '';
-    position: absolute;
-    z-index: 4;
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    margin-left: calc(50% - 4.5px);
-    border-radius: 9px;
-    background-color: rgb(57, 64, 72);
+  transition: all 0.4s;
 
-    transition: all 0.4s;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    display: inline-block;
-    left: 0px;
-    top: 4px;
-    width: 100%;
-    height: 1px;
-    background-color: rgb(57, 64, 72);
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    display: none;
   }
 `;
 
 const MovedSphere = styled.div`
   position: relative;
   z-index: 5;
-  top: -8px;
-  left: ${(props: { curIndex: number }) => props.curIndex * 100 + 40}px;
-  width: 20px;
-  height: 20px;
-  border-radius: 20px;
+  top: calc(var(--moved-sphere-radius) * -1);
+  left: calc(${(props: { curIndex: number }) => props.curIndex + 0.5} *
+    (var(--img-width) + 2 * var(--img-margin)) - var(--moved-sphere-radius) + 5vw);
+  width: calc(var(--moved-sphere-radius) * 2);
+  height: calc(var(--moved-sphere-radius) * 2);
+  border-radius: calc(var(--moved-sphere-radius) * 2);
+  
   border: 2px solid #d0a85c;
 
   transition: 1s all;
@@ -149,11 +188,15 @@ const MovedSphere = styled.div`
     display: block;
     top: 4px;
     left: 4px;
-
     width: 8px;
     height: 8px;
     border-radius: 8px;
+
     background-color: #d0a85c;
+  }
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    display: none;
   }
 `;
 
@@ -172,7 +215,7 @@ export default function AbilitySelect(props: IProps) {
   };
 
   return (
-    <>
+    <VariableWrapper>
       <Wrapper>
         {props.iconSrcs.map((src, index) => (
           <Item key={src}>
@@ -204,11 +247,11 @@ export default function AbilitySelect(props: IProps) {
               )}
             </ClipRectWrapper>
             <VerticalLine />
-            <BottomLine />
+            <BottomSphere />
           </Item>
         ))}
       </Wrapper>
       <MovedSphere curIndex={curIndex} />
-    </>
+    </VariableWrapper>
   );
 }

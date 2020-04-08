@@ -1,8 +1,23 @@
 import styled from 'styled-components';
 import React from 'react';
+import { lgBreakpoint, smBreakpoint } from '../breakpoint';
 
 const Wrapper = styled.ul`
-  padding: 0px;
+  padding: 30px 30px 0px 7vw;
+
+  &::after {
+    content: '';
+    display: block;
+    clear: left;
+  }
+
+  @media screen and (max-width: ${lgBreakpoint}px) {
+    padding: 0px 15%;
+  }
+
+  @media screen and (max-width: ${smBreakpoint}px) {
+    padding: 0px 30px;
+  }
 `;
 
 const Type = styled.h6`
@@ -36,6 +51,7 @@ const Item = styled.li`
   width: 100%;
   float: left;
   margin-left: ${(props: ItemProps) => (props.index === 0 ? '0' : '-100%')};
+  
   list-style: none;
   opacity: ${(props: ItemProps) => (props.show ? 1 : 0)};
 
