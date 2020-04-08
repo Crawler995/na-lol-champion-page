@@ -104,8 +104,10 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   private canvasRef: React.RefObject<HTMLCanvasElement>;
 
   private dpr = window.devicePixelRatio;
-  private lineGrowPartLength: number = 0;
 
+  private points: IPos[] | null = null;
+  private pointsInfo: IPointsInfo | null = null;
+  private lineGrowPartLength: number = 0;
   private ctx: CanvasRenderingContext2D | null = null;
   private mouseEnterTween: TWEEN.Tween | null = null;
   private mouseLeaveTween: TWEEN.Tween | null = null;
@@ -114,6 +116,12 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   private requestAnimationFrameFlag: number = 0;
   private shouldStopAnimation = false;
   private isFirstDrawWithoutAnimation = true;
+  private pointsInfoCache = new Array<{
+    totalLength: number;
+    excludeLastLength: number;
+    pointIndexBeforeEndPoint: number;
+    startAndMiddlePoints: IPos[];
+  }>();
 
   constructor(props: ClipRectProps) {
     super(props);
@@ -131,6 +139,8 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
     this.initSize();
     this.initCtx();
     this.initLineGrowTween();
+    this.points = this.getClipRectPoints();
+    this.pointsInfo = this.initPointsInfo();
 
     if (this.props.draw) {
       this.requestAnimationFrameFlag = window.requestAnimationFrame(this.draw);
@@ -147,7 +157,8 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   componentDidUpdate() {
     this.initSize();
     this.initCtx();
-
+    this.points = this.getClipRectPoints();
+    this.pointsInfo = this.initPointsInfo();
     this.draw();
   }
 
@@ -167,8 +178,10 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
   };
 
   sizeChangeHandler = debounce(() => {
-    console.log('resize')
+    console.log('resize');
     this.initSize();
+    this.points = this.getClipRectPoints();
+    this.pointsInfo = this.initPointsInfo();
     this.draw();
   }, 500);
 
@@ -260,15 +273,61 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
           ? (lineGrowHeadLength - (this.lineGrowPartLength + lineGrowHeadLength - 1 / num)) /
             lineGrowHeadLength
           : 1;
-      this.drawLineByStartPointAndLength(lineGrowHeadStart, lineGrowHeadLength);
+      this.drawLineByStartPointAndLength(lineGrowHeadStart, lineGrowHeadLength, false);
     }
     this.ctx!.lineWidth = borderWidth;
     this.ctx!.globalAlpha = 1;
   };
 
-  drawLineByStartPointAndLength = (start: number, length: number, alpha = 1) => {
-    const points = this.getClipRectPoints();
-    const pointsInfo = this.initPointsInfo();
+  drawLineByStartPointAndLength = (start: number, length: number, useCache = true) => {
+    const points = this.points!;
+    const pointsInfo = this.pointsInfo!;
+    const index = Math.round(start * this.props.lineGrowAnimationConfig.startDrawPointsNum);
+    const cache = this.pointsInfoCache[index];
+    if (useCache && cache) {
+      const originalStartAndMiddlePoints = cache.startAndMiddlePoints;
+      const restLength = length - cache.excludeLastLength;
+      let endPoint;
+
+      // two conditions
+
+      // start and middle points are the same, end point is in the same line
+      // we can only compute the end point
+
+      // middle points should push one other point, end point is in another line
+      // we should update the middle points and compute the end point
+      const realRestLength = restLength * pointsInfo.totalBorderLength;
+      if (realRestLength <= pointsInfo.stepsLength[cache.pointIndexBeforeEndPoint]) {
+        endPoint = this.getPointPosByBehindKnownPointAndRestLength(
+          cache.pointIndexBeforeEndPoint,
+          realRestLength
+        );
+
+        this.pointsInfoCache[index] = {
+          ...cache,
+          totalLength: length
+        };
+      } else {
+        const nextPointIndex = (cache.pointIndexBeforeEndPoint + 1) % points.length;
+        originalStartAndMiddlePoints.push(points[nextPointIndex]);
+        const finalRestLength =
+          realRestLength - pointsInfo.stepsLength[cache.pointIndexBeforeEndPoint];
+        endPoint = this.getPointPosByBehindKnownPointAndRestLength(nextPointIndex, finalRestLength);
+
+        this.pointsInfoCache[index] = {
+          ...cache,
+          totalLength: length,
+          excludeLastLength: length - finalRestLength / pointsInfo.totalBorderLength,
+          pointIndexBeforeEndPoint: nextPointIndex,
+          startAndMiddlePoints: originalStartAndMiddlePoints
+        };
+      }
+
+      const pointsThroughLine = [...originalStartAndMiddlePoints, endPoint];
+      this.drawLineThroughPoints(pointsThroughLine, false);
+
+      return;
+    }
 
     const getStartPoint = (start: number) => {
       const startLength = start * pointsInfo.totalBorderLength;
@@ -345,14 +404,23 @@ export default class ClipRect extends Component<ClipRectProps, ClipRectState> {
       length
     );
     const middlePoints = middlePointsIndex.map(index => points[index]);
-    const endPoint = getEndPoint(
-      middlePointsIndex[middlePointsIndex.length - 1] ?? startBehindPointIndex,
+    const lastPointIndex = middlePointsIndex[middlePointsIndex.length - 1] ?? startBehindPointIndex;
+    const finalRestLength =
       middlePointsIndex[middlePointsIndex.length - 1] !== undefined
         ? restLength
-        : restLength + this.getDistance(startPoint, points[startBehindPointIndex])
-    );
+        : restLength + this.getDistance(startPoint, points[startBehindPointIndex]);
+    const endPoint = getEndPoint(lastPointIndex, finalRestLength);
 
-    this.drawLineThroughPoints([startPoint, ...middlePoints, endPoint], false, alpha);
+    if (useCache) {
+      this.pointsInfoCache[index] = {
+        totalLength: length,
+        excludeLastLength: length - finalRestLength / pointsInfo.totalBorderLength,
+        pointIndexBeforeEndPoint: lastPointIndex,
+        startAndMiddlePoints: [startPoint, ...middlePoints]
+      };
+    }
+
+    this.drawLineThroughPoints([startPoint, ...middlePoints, endPoint], false);
   };
 
   getPointPosByBehindKnownPointAndRestLength = (beforePointIndex: number, restLength: number) => {
