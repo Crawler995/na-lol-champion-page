@@ -20,3 +20,10 @@
   src: url('./assets/fonts/BeaufortforLOL-Bold.woff') format('woff');
   font-weight: bold;
 }
+
+@font-face {
+  font-family: 'Beaufort for LOL';
+  src: url('./assets/fonts/BeaufortforLOL-HeavyItalic.woff') format('woff');
+  font-weight: bold;
+  font-style: italic;
+}
