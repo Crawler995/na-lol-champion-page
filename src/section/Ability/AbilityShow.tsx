@@ -40,7 +40,7 @@ const Item = styled.li`
   width: 100%;
   float: left;
   margin-left: ${(props: ItemProps) => (props.index === 0 ? '0' : '-100%')};
-  
+
   list-style: none;
   opacity: ${(props: ItemProps) => (props.show ? 1 : 0)};
 
@@ -121,8 +121,9 @@ class ClipRect extends React.PureComponent {
   }
 }
 
-function AbilityShowItem(props: { info: IInfo; videoPlay: boolean }) {
+function AbilityShowItem(props: { info: IInfo; videoPlay: boolean, onImageLoad: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const [imageHidden, setImageHidden] = useState(false);
   let playPromise = useRef<Promise<void>>();
 
@@ -146,9 +147,21 @@ function AbilityShowItem(props: { info: IInfo; videoPlay: boolean }) {
     return () => current.removeEventListener('canplaythrough', handler);
   }, [videoRef]);
 
+  const {onImageLoad} = props;
+  useEffect(() => {
+    const handler = () => {
+      onImageLoad();
+    }
+    const current = imageRef.current!;
+    current.addEventListener('load', handler);
+
+    return () => current.removeEventListener('load', handler);
+  }, [imageRef, onImageLoad]);
+
   return (
     <>
       <PreviewImage
+        ref={imageRef}
         src={props.info.previewImageSrc}
         style={{
           opacity: Number(!imageHidden)
@@ -160,14 +173,22 @@ function AbilityShowItem(props: { info: IInfo; videoPlay: boolean }) {
 }
 
 export default function AbilityShow(props: IProps) {
+  const [canShowClipRect, setCanShowClipRect] = useState(false);
+
   return (
     <Wrapper>
       {props.infos.map((info, index) => (
         <Item key={info.videoSrc} index={index} show={index === props.curIndex}>
-          <AbilityShowItem info={info} videoPlay={index === props.curIndex} />
+          <AbilityShowItem
+            info={info}
+            videoPlay={index === props.curIndex}
+            onImageLoad={() => setCanShowClipRect(true)}
+          />
         </Item>
       ))}
-      <ClipRect />
+      {
+        canShowClipRect ? <ClipRect /> : <></>
+      }
     </Wrapper>
   );
 }
