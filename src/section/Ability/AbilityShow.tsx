@@ -58,8 +58,7 @@ const PreviewImage = styled.img`
 const Video = styled.video.attrs({
   playsInline: true,
   loop: true,
-  muted: true,
-  preload: 'metadata'
+  muted: true
 })`
   position: absolute;
   display: block;
@@ -121,7 +120,7 @@ class ClipRect extends React.PureComponent {
   }
 }
 
-function AbilityShowItem(props: { info: IInfo; videoPlay: boolean, onImageLoad: () => void }) {
+function AbilityShowItem(props: { info: IInfo; videoPlay: boolean; onImageLoad: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageHidden, setImageHidden] = useState(false);
@@ -147,11 +146,11 @@ function AbilityShowItem(props: { info: IInfo; videoPlay: boolean, onImageLoad: 
     return () => current.removeEventListener('canplaythrough', handler);
   }, [videoRef]);
 
-  const {onImageLoad} = props;
+  const { onImageLoad } = props;
   useEffect(() => {
     const handler = () => {
       onImageLoad();
-    }
+    };
     const current = imageRef.current!;
     current.addEventListener('load', handler);
 
@@ -186,9 +185,7 @@ export default function AbilityShow(props: IProps) {
           />
         </Item>
       ))}
-      {
-        canShowClipRect ? <ClipRect /> : <></>
-      }
+      {canShowClipRect ? <ClipRect /> : <></>}
     </Wrapper>
   );
 }

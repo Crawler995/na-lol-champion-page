@@ -1,6 +1,6 @@
 import React from 'react';
 import { createGlobalStyle } from 'styled-components';
-import { Ability, Skin, PlayForFree } from './section';
+import { Ability, Skin, PlayForFree, Introduction } from './section';
 import './font.css';
 
 const GlobalStyle = createGlobalStyle`
@@ -21,6 +21,7 @@ function App() {
     <div className="App">
       <GlobalStyle />
 
+      {/* <Introduction /> */}
       <Ability />
       <Skin />
       <PlayForFree />

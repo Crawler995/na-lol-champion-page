@@ -51,7 +51,7 @@ const Item = styled.li`
   width: 100%;
   float: left;
   margin-left: ${(props: ItemProps) => (props.index === 0 ? '0' : '-100%')};
-  
+
   list-style: none;
   opacity: ${(props: ItemProps) => (props.show ? 1 : 0)};
 

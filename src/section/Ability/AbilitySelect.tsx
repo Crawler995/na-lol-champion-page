@@ -172,12 +172,11 @@ const MovedSphere = styled.div`
   position: relative;
   z-index: 5;
   top: calc(var(--moved-sphere-radius) * -1);
-  left: calc(${(props: { curIndex: number }) => props.curIndex + 0.5} *
-    (var(--img-width) + 2 * var(--img-margin)) - var(--moved-sphere-radius) + 5vw);
+  left: calc(${(props: { curIndex: number }) => props.curIndex + 0.5} * (var(--img-width) + 2 * var(--img-margin)) - var(--moved-sphere-radius) + 5vw);
   width: calc(var(--moved-sphere-radius) * 2);
   height: calc(var(--moved-sphere-radius) * 2);
   border-radius: calc(var(--moved-sphere-radius) * 2);
-  
+
   border: 2px solid #d0a85c;
 
   transition: 1s all;
